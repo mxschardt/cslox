@@ -25,6 +25,13 @@ public class Lox
 
     private static void RunFile(string path)
     {
+        var exists = File.Exists(path);
+        if (!exists)
+        {
+            Console.WriteLine("No such file.");
+            Environment.Exit(65);
+        }
+
         var text = File.ReadAllText(path, Encoding.UTF8);
         Run(text);
 
