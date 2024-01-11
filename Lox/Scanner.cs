@@ -1,3 +1,5 @@
+using static Lox.TokenType;
+
 namespace Lox;
 
 class Scanner
@@ -7,6 +9,27 @@ class Scanner
     private int Start = 0;
     private int Current = 0;
     private int Line = 1;
+    private static readonly Dictionary<string, TokenType> Keywords = [];
+
+    static Scanner()
+    {
+        Keywords.Add("and",    AND);
+        Keywords.Add("class",  CLASS);
+        Keywords.Add("else",   ELSE);
+        Keywords.Add("false",  FALSE);
+        Keywords.Add("for",    FOR);
+        Keywords.Add("fun",    FUN);
+        Keywords.Add("if",     IF);
+        Keywords.Add("nil",    NIL);
+        Keywords.Add("or",     OR);
+        Keywords.Add("print",  PRINT);
+        Keywords.Add("return", RETURN);
+        Keywords.Add("super",  SUPER);
+        Keywords.Add("this",   THIS);
+        Keywords.Add("true",   TRUE);
+        Keywords.Add("var",    VAR);
+        Keywords.Add("while",  WHILE);
+    }
 
     public Scanner(string source)
     {
@@ -21,7 +44,7 @@ class Scanner
             ScanToken();
         }
 
-        Tokens.Add(new Token(TokenType.EOF, "", null, Line));
+        Tokens.Add(new Token(EOF, "", null, Line));
         return Tokens;
     }
 
@@ -30,28 +53,28 @@ class Scanner
         char c = Advance();
         switch (c)
         {
-            case '(': AddToken(TokenType.LEFT_PAREN); break;
-            case ')': AddToken(TokenType.RIGHT_PAREN); break;
-            case '{': AddToken(TokenType.LEFT_BRACE); break;
-            case '}': AddToken(TokenType.RIGHT_BRACE); break;
-            case ',': AddToken(TokenType.COMMA); break;
-            case '.': AddToken(TokenType.DOT); break;
-            case '-': AddToken(TokenType.MINUS); break;
-            case '+': AddToken(TokenType.PLUS); break;
-            case ';': AddToken(TokenType.SEMICOLON); break;
-            case '*': AddToken(TokenType.STAR); break;
+            case '(': AddToken(LEFT_PAREN); break;
+            case ')': AddToken(RIGHT_PAREN); break;
+            case '{': AddToken(LEFT_BRACE); break;
+            case '}': AddToken(RIGHT_BRACE); break;
+            case ',': AddToken(COMMA); break;
+            case '.': AddToken(DOT); break;
+            case '-': AddToken(MINUS); break;
+            case '+': AddToken(PLUS); break;
+            case ';': AddToken(SEMICOLON); break;
+            case '*': AddToken(STAR); break;
 
             case '!':
-                AddToken(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG);
+                AddToken(Match('=') ? BANG_EQUAL : BANG);
                 break;
             case '=':
-                AddToken(Match('=') ? TokenType.EQUAL_EQUAL : TokenType.EQUAL);
+                AddToken(Match('=') ? EQUAL_EQUAL : EQUAL);
                 break;
             case '<':
-                AddToken(Match('=') ? TokenType.LESS_EQUAL : TokenType.LESS);
+                AddToken(Match('=') ? LESS_EQUAL : LESS);
                 break;
             case '>':
-                AddToken(Match('=') ? TokenType.GREATER_EQUAL : TokenType.GREATER);
+                AddToken(Match('=') ? GREATER_EQUAL : GREATER);
                 break;
 
             case '/':
@@ -65,14 +88,13 @@ class Scanner
                 }
                 else
                 {
-                    AddToken(TokenType.SLASH);
+                    AddToken(SLASH);
                 }
                 break;
 
             case '"':
                 String();
                 break;
-
 
             case ' ':
             case '\r':
@@ -84,7 +106,18 @@ class Scanner
                 break;
 
             default:
-                Lox.Error(Line, "Unexpected character.");
+                if (IsDigit(c))
+                {
+                    Number();
+                }
+                else if (IsAlpha(c))
+                {
+                    Identifier();
+                }
+                else
+                {
+                    Lox.Error(Line, "Unexpected character.");
+                }
                 break;
         }
     }
@@ -103,6 +136,15 @@ class Scanner
             return '\0';
         }
         return Source[Current];
+    }
+
+    private char PeekNext()
+    {
+        if (Current + 1 >= Source.Length)
+        {
+            return '\0';
+        }
+        return Source[Current + 1];
     }
 
     private bool Match(char expected)
@@ -137,6 +179,23 @@ class Scanner
         return Current >= Source.Length;
     }
 
+    private static bool IsAlpha(char c)
+    {
+        return (c >= 'a' && c <= 'z') ||
+               (c >= 'A' && c <= 'Z') ||
+                c == '_';
+    }
+
+    private static bool IsAlphaNumeric(char c)
+    {
+        return IsAlpha(c) || IsDigit(c);
+    }
+
+    private static bool IsDigit(char c)
+    {
+        return c >= '0' && c <= '9';
+    }
+
     private void String()
     {
         while (Peek() != '"' && !IsAtEnd())
@@ -157,6 +216,44 @@ class Scanner
         Advance();
 
         string value = Source[(Start + 1)..(Current - 1)];
-        AddToken(TokenType.STRING, value);
+        AddToken(STRING, value);
+    }
+
+    private void Number()
+    {
+        while (IsDigit(Peek()))
+        {
+            Advance();
+        }
+
+        // Look for a fractions part.
+        if (Peek() == '.' && IsDigit(PeekNext()))
+        {
+            // Consume the ".".
+            Advance();
+
+            while (IsDigit(Peek()))
+            {
+                Advance();
+            }
+        }
+
+        AddToken(NUMBER, Double.Parse(Source[Start..Current]));
+    }
+
+    private void Identifier()
+    {
+        while (IsAlphaNumeric(Peek()))
+        {
+            Advance();
+        }
+
+        var text = Source[Start..Current];
+        if (Keywords.TryGetValue(text, out TokenType type))
+        {
+            AddToken(type);
+            return;
+        }
+        AddToken(IDENTIFIER);
     }
 }
