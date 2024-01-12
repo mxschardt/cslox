@@ -86,6 +86,29 @@ class Scanner
                         Advance();
                     }
                 }
+                else if (Match('*'))
+                {
+                    while (!(Peek() == '*' && PeekNext() == '/') && !IsAtEnd())
+                    {
+                        if (Peek() == '\n')
+                        {
+                            Line += 1;
+                        }
+
+                        Advance();
+                    }
+
+                    if (IsAtEnd())
+                    {
+                        Lox.Error(Line, "Unterminated comment.");
+                        break;
+                    }
+
+                    // Consume *.
+                    Advance();
+                    // Consume /.
+                    Advance();
+                }
                 else
                 {
                     AddToken(SLASH);
@@ -210,6 +233,7 @@ class Scanner
         if (IsAtEnd())
         {
             Lox.Error(Line, "Unterminated string.");
+            return;
         }
 
         // Consume closing ".
