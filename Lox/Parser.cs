@@ -2,13 +2,15 @@ using static Lox.TokenType;
 
 namespace Lox;
 
-// expression     → equality ;
+// expression     → ternary ;
+// ternary        → comparison ("?" comparison ":" comparison)* ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
 //                | comma ;
+//
 // comma          → primary ("," primary)* ;
 // primary        → NUMBER | STRING | "true" | "false" | "nil"
 //                | "(" expression ")" ;
@@ -40,7 +42,22 @@ class Parser
 
     private Expr Expression()
     {
-        return Equality();
+        return Ternary();
+    }
+
+    private Expr Ternary()
+    {
+        Expr expr = Equality();
+
+        while (Match(QUESTION_MARK))
+        {
+            Expr right = Equality();
+            Consume(COLON, "Expect ':' in ternary.");
+            Expr left = Equality();
+            expr = new Expr.Ternary(expr, right, left);
+        }
+
+        return expr;
     }
 
     private Expr Equality()

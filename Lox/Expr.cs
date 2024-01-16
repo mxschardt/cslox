@@ -9,6 +9,7 @@ abstract class Expr
         T VisitLiteralExpr(Literal expr);
         T VisitUnaryExpr(Unary expr);
         T VisitCommaExpr(Comma expr);
+        T VisitTernaryExpr(Ternary ternary);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -94,7 +95,24 @@ abstract class Expr
         {
             return visitor.VisitCommaExpr(this);
         }
-
     }
 
+    internal class Ternary : Expr
+    {
+        internal readonly Expr Condition;
+        internal readonly Expr Left;
+        internal readonly Expr Right;
+
+        internal Ternary(Expr condition, Expr left, Expr right)
+        {
+            Condition = condition;
+            Left = left;
+            Right = right;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitTernaryExpr(this);
+        }
+    }
 }

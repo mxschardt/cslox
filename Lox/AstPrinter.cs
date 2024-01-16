@@ -41,6 +41,11 @@ class AstPrinter : Expr.IVisitor<string>
         return Parenthesize(",", expr.Left, expr.Right);
     }
 
+    public string VisitTernaryExpr(Expr.Ternary expr)
+    {
+        return Parenthesize("?", expr.Condition, expr.Left, expr.Right);
+    }
+
     private string Parenthesize(string name, params Expr[] exprs)
     {
         var builder = new StringBuilder();
@@ -55,4 +60,5 @@ class AstPrinter : Expr.IVisitor<string>
 
         return builder.ToString();
     }
+
 }
