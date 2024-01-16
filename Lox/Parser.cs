@@ -2,6 +2,18 @@ using static Lox.TokenType;
 
 namespace Lox;
 
+// expression     → equality ;
+// equality       → comparison ( ( "!=" | "==" ) comparison )* ;
+// comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
+// term           → factor ( ( "-" | "+" ) factor )* ;
+// factor         → unary ( ( "/" | "*" ) unary )* ;
+// unary          → ( "!" | "-" ) unary
+//                | comma ;
+// comma          → primary ("," primary)* ;
+// primary        → NUMBER | STRING | "true" | "false" | "nil"
+//                | "(" expression ")" ;
+
+
 class Parser
 {
     private class ParseError : Exception;
@@ -96,7 +108,20 @@ class Parser
             return new Expr.Unary(oper, right);
         }
 
-        return Primary();
+        return Comma();
+    }
+
+    private Expr Comma()
+    {
+        Expr expr = Primary();
+
+        while (Match(COMMA))
+        {
+            Expr right = Comma();
+            expr = new Expr.Comma(expr, right);
+        }
+
+        return expr;
     }
 
     private Expr Primary()

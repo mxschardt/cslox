@@ -8,6 +8,7 @@ abstract class Expr
         T VisitGroupingExpr(Grouping expr);
         T VisitLiteralExpr(Literal expr);
         T VisitUnaryExpr(Unary expr);
+        T VisitCommaExpr(Comma expr);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -76,6 +77,24 @@ abstract class Expr
         {
             return visitor.VisitUnaryExpr(this);
         }
+    }
+
+    internal class Comma : Expr
+    {
+        internal readonly Expr Left;
+        internal readonly Expr Right;
+
+        internal Comma(Expr left, Expr right)
+        {
+            Left = left;
+            Right = right;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitCommaExpr(this);
+        }
+
     }
 
 }

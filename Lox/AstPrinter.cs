@@ -36,6 +36,11 @@ class AstPrinter : Expr.IVisitor<string>
         return Parenthesize(expr.Oper.Lexeme, expr.Right);
     }
 
+    public string VisitCommaExpr(Expr.Comma expr)
+    {
+        return Parenthesize(",", expr.Left, expr.Right);
+    }
+
     private string Parenthesize(string name, params Expr[] exprs)
     {
         var builder = new StringBuilder();
