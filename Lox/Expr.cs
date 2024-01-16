@@ -48,9 +48,9 @@ abstract class Expr
 
     internal class Literal : Expr
     {
-        internal readonly object Value;
+        internal readonly object? Value;
 
-        internal Literal(object value)
+        internal Literal(object? value)
         {
           Value = value;
         }
