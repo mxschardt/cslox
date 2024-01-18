@@ -52,9 +52,10 @@ class Parser
         while (Match(QUESTION_MARK))
         {
             Expr right = Equality();
+            Token oper = Previous();
             Consume(COLON, "Expect ':' in ternary.");
             Expr left = Equality();
-            expr = new Expr.Ternary(expr, right, left);
+            expr = new Expr.Ternary(expr, oper, right, left);
         }
 
         return expr;
@@ -135,7 +136,8 @@ class Parser
         while (Match(COMMA))
         {
             Expr right = Comma();
-            expr = new Expr.Comma(expr, right);
+            Token oper = Previous();
+            expr = new Expr.Comma(expr, oper, right);
         }
 
         return expr;

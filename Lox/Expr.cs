@@ -22,9 +22,9 @@ abstract class Expr
 
         internal Binary(Expr left, Token @operator, Expr right)
         {
-          Left = left;
-          Operator = @operator;
-          Right = right;
+            Left = left;
+            Operator = @operator;
+            Right = right;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -39,7 +39,7 @@ abstract class Expr
 
         internal Grouping(Expr expression)
         {
-          Expression = expression;
+            Expression = expression;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -54,7 +54,7 @@ abstract class Expr
 
         internal Literal(object? value)
         {
-          Value = value;
+            Value = value;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -72,8 +72,8 @@ abstract class Expr
 
         internal Unary(Token @operator, Expr right)
         {
-          Operator = @operator;
-          Right = right;
+            Operator = @operator;
+            Right = right;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -85,11 +85,13 @@ abstract class Expr
     internal class Comma : Expr
     {
         internal readonly Expr Left;
+        internal readonly Token Operator;
         internal readonly Expr Right;
 
-        internal Comma(Expr left, Expr right)
+        internal Comma(Expr left, Token @operator, Expr right)
         {
             Left = left;
+            Operator = @operator;
             Right = right;
         }
 
@@ -102,12 +104,14 @@ abstract class Expr
     internal class Ternary : Expr
     {
         internal readonly Expr Condition;
+        internal readonly Token Operator;
         internal readonly Expr Left;
         internal readonly Expr Right;
 
-        internal Ternary(Expr condition, Expr left, Expr right)
+        internal Ternary(Expr condition, Token @operator, Expr left, Expr right)
         {
             Condition = condition;
+            Operator = @operator;
             Left = left;
             Right = right;
         }

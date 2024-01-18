@@ -124,14 +124,24 @@ class Interpreter : Expr.IVisitor<object>
         throw new UnreachableException();
     }
 
-    public object VisitTernaryExpr(Expr.Ternary ternary)
+    public object VisitTernaryExpr(Expr.Ternary expr)
     {
-        throw new NotImplementedException();
+        object condition = Evaluate(expr.Condition);
+
+        if (IsTruthy(condition))
+        {
+            return Evaluate(expr.Left);
+        }
+        else
+        {
+            return Evaluate(expr.Right);
+        }
     }
 
     public object VisitCommaExpr(Expr.Comma expr)
     {
-        throw new NotImplementedException();
+        Evaluate(expr.Left);
+        return Evaluate(expr.Right);
     }
 
     private static void CheckNumberOperand(Token @operator, object operand)
