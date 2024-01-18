@@ -6,7 +6,7 @@ abstract class Expr
     {
         T VisitBinaryExpr(Binary expr);
         T VisitGroupingExpr(Grouping expr);
-        T VisitLiteralExpr(Literal expr);
+        T? VisitLiteralExpr(Literal expr);
         T VisitUnaryExpr(Unary expr);
         T VisitCommaExpr(Comma expr);
         T VisitTernaryExpr(Ternary ternary);
@@ -59,7 +59,9 @@ abstract class Expr
 
         internal override T Accept<T>(IVisitor<T> visitor)
         {
+#pragma warning disable CS8603 // Possible null reference return.
             return visitor.VisitLiteralExpr(this);
+#pragma warning restore CS8603 // Possible null reference return.
         }
     }
 
