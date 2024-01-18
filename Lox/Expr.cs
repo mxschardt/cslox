@@ -17,13 +17,13 @@ abstract class Expr
     internal class Binary : Expr
     {
         internal readonly Expr Left;
-        internal readonly Token Oper;
+        internal readonly Token Operator;
         internal readonly Expr Right;
 
-        internal Binary(Expr left, Token oper, Expr right)
+        internal Binary(Expr left, Token @operator, Expr right)
         {
           Left = left;
-          Oper = oper;
+          Operator = @operator;
           Right = right;
         }
 
@@ -65,12 +65,12 @@ abstract class Expr
 
     internal class Unary : Expr
     {
-        internal readonly Token Oper;
+        internal readonly Token Operator;
         internal readonly Expr Right;
 
-        internal Unary(Token oper, Expr right)
+        internal Unary(Token @operator, Expr right)
         {
-          Oper = oper;
+          Operator = @operator;
           Right = right;
         }
 
