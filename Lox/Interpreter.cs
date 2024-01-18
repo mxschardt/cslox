@@ -74,6 +74,10 @@ class Interpreter : Expr.IVisitor<object>
                 return (double)left - (double)right;
             case SLASH:
                 CheckNumberOperands(expr.Operator, left, right);
+                if ((double)right == 0)
+                {
+                    throw new RuntimeException(expr.Operator, "Division by zero");
+                }
                 return (double)left / (double)right;
             case STAR:
                 CheckNumberOperands(expr.Operator, left, right);
