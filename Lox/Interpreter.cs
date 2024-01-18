@@ -79,17 +79,13 @@ class Interpreter : Expr.IVisitor<object>
                 CheckNumberOperands(expr.Operator, left, right);
                 return (double)left * (double)right;
             case PLUS:
-                if (left is double && right is double)
-                {
-                    return (double)left + (double)right;
-                }
-
-                if (left is string && right is string)
-                {
-                    return (string)left + (string)right;
-                }
-
-                throw new RuntimeException(expr.Operator, "Operands must be two numbers or two strings.");
+                return (left, right) switch {
+                    (double l, double r) => l + r,
+                    (string l, string r) => l + r,
+                    (double l, string r) => l.ToString() + r,
+                    (string l, double r) => l + r.ToString(),
+                    _ => throw new RuntimeException(expr.Operator, "Operands must be numbers or strings.")
+                };
 
             case BANG_EQUAL:
                 return !IsEqual(left, right);
