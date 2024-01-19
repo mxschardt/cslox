@@ -2,6 +2,7 @@ namespace Lox;
 
 abstract class Expr
 {
+    // Visitor pattern using Double Dispatch
     internal interface IVisitor<T>
     {
         T VisitBinaryExpr(Binary expr);
@@ -59,9 +60,9 @@ abstract class Expr
 
         internal override T Accept<T>(IVisitor<T> visitor)
         {
-#pragma warning disable CS8603 // Possible null reference return.
+            #pragma warning disable CS8603 // Possible null reference return.
             return visitor.VisitLiteralExpr(this);
-#pragma warning restore CS8603 // Possible null reference return.
+            #pragma warning restore CS8603
         }
     }
 

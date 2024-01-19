@@ -22,7 +22,7 @@ class Interpreter : Expr.IVisitor<object>
         }
         catch (UnreachableException)
         {
-            // TODO
+            throw;
         }
     }
 
@@ -109,6 +109,7 @@ class Interpreter : Expr.IVisitor<object>
     {
         return expr.Value;
     }
+
     public object VisitUnaryExpr(Expr.Unary expr)
     {
         object right = Evaluate(expr.Right);

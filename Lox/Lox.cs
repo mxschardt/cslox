@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace Lox;
 
@@ -6,7 +6,6 @@ public class Lox
 {
     internal static readonly Interpreter interpreter = new();
     internal static bool hadError = false;
-
     internal static bool hadRuntimeError = false;
 
     public static void Main(string[] args)
