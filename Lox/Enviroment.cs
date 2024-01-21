@@ -4,6 +4,7 @@ internal class Environment
 {
     private readonly Environment? Enclosing = null;
     private readonly Dictionary<string, object?> Values = [];
+    private readonly HashSet<string> Undefined = [];
 
     public Environment() { }
 
@@ -17,11 +18,23 @@ internal class Environment
         Values.Add(name, value);
     }
 
+    internal void Announce(string name)
+    {
+        Undefined.Add(name);
+    }
+
     internal void Assign(Token name, object value)
     {
         if (Values.ContainsKey(name.Lexeme))
         {
-            Values[name.Lexeme] =  value;
+            Values[name.Lexeme] = value;
+            return;
+        }
+
+        if (Undefined.Contains(name.Lexeme))
+        {
+            Define(name.Lexeme, value);
+            Undefined.Remove(name.Lexeme);
             return;
         }
 
@@ -40,6 +53,11 @@ internal class Environment
         if (Values.TryGetValue(name.Lexeme, out object? value))
         {
             return value;
+        }
+
+        if (Undefined.Contains(name.Lexeme))
+        {
+            throw new RuntimeException(name, $"Variable '{name.Lexeme}' isn't initialized.");
         }
 
         if (Enclosing != null)

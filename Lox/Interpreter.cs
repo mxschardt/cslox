@@ -206,14 +206,16 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 
     public object? VisitVarStmt(Stmt.Var stmt)
     {
-        object? value = null;
-
-        if (stmt.Initializer != null)
+        if (stmt.Initializer == null)
         {
-            value = Evaluate(stmt.Initializer);
+            environment.Announce(stmt.Name.Lexeme);
+        }
+        else
+        {
+            var value = Evaluate(stmt.Initializer);
+            environment.Define(stmt.Name.Lexeme, value);
         }
 
-        environment.Define(stmt.Name.Lexeme, value);
         return null;
     }
 
