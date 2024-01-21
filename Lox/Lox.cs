@@ -7,6 +7,7 @@ public class Lox
     internal static readonly Interpreter interpreter = new();
     internal static bool hadError = false;
     internal static bool hadRuntimeError = false;
+    internal static bool Repl = false;
 
     public static void Main(string[] args)
     {
@@ -49,6 +50,7 @@ public class Lox
 
     private static void RunPrompt()
     {
+        Repl = true;
         while (true)
         {
             Console.Write("> ");
@@ -73,8 +75,14 @@ public class Lox
 
         if (hadError || statements == null) return;
 
-        interpreter.Interpret(statements);
-        // Console.WriteLine(new AstPrinter().Print(statements));
+        if (Repl)
+        {
+            interpreter.InterpretRepl(statements);
+        }
+        else
+        {
+            interpreter.Interpret(statements);
+        }
     }
 
     internal static void Error(int line, string message)

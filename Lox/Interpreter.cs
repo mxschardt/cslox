@@ -15,8 +15,37 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
             {
                 Execute(statement);
             }
-            // object value = Evaluate(expression);
-            // Console.WriteLine(Stringify(value));
+        }
+        catch (RuntimeException ex)
+        {
+            Lox.RuntimeException(ex);
+        }
+        catch (NotImplementedException)
+        {
+            // TODO
+        }
+        catch (UnreachableException)
+        {
+            throw;
+        }
+    }
+
+    internal void InterpretRepl(List<Stmt> statements)
+    {
+        try
+        {
+            foreach (var statement in statements)
+            {
+                if (statement is Stmt.Expression expr)
+                {
+                    object value = Evaluate(expr.Expr);
+                    Console.WriteLine(Stringify(value));
+                }
+                else
+                {
+                    Execute(statement);
+                }
+            }
         }
         catch (RuntimeException ex)
         {
