@@ -2,24 +2,34 @@ using static Lox.TokenType;
 
 namespace Lox;
 
-// expression     → ternary ;
-// ternary        → comparison ("?" comparison ":" comparison)* ;
+// program        → declaration* EOF ;
+// declaration    → varDecl
+//                | statement ;
+// statement      → exprStmt
+//                | printStmt
+//                | block ;
+// varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
+// block          → "{" declaration* "}"
+//
+// expression     → assignment ;
+// assignment     → IDENTIFIER "=" assignment
+//                | ternary ;
+// ternary        → equality ("?" equality ":" equality)* ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
 // term           → factor ( ( "-" | "+" ) factor )* ;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
 //                | comma ;
-//
 // comma          → primary ("," primary)* ;
-// primary        → NUMBER | STRING | "true" | "false" | "nil"
-//                | "(" expression ")" ;
-
+// primary        → "true" | "false" | "nil"
+//                | NUMBER | STRING
+//                | "(" expression ")"
+//                | IDENTIFIER ;
 
 class Parser
 {
-    private class ParseError : Exception;
-
+    private class ParseException : Exception;
     private readonly List<Token> Tokens;
     private int Current = 0;
 
@@ -28,21 +38,116 @@ class Parser
         Tokens = tokens;
     }
 
-    public Expr? Parse()
+    public List<Stmt>? Parse()
+    {
+        List<Stmt> statements = [];
+        while (!IsAtEnd())
+        {
+            var value = Declaration();
+            // TODO: handle null value
+            statements.Add(value);
+        }
+        return statements;
+    }
+
+    private Stmt? Declaration()
     {
         try
         {
-            return Expression();
+            if (Match(VAR))
+            {
+                return VarDeclaration();
+            }
+
+            return Statement();
         }
-        catch (ParseError)
+        catch (ParseException)
         {
+            Synchronize();
             return null;
         }
     }
 
+    private Stmt VarDeclaration()
+    {
+        Token name = Consume(IDENTIFIER, "Expect variable name.");
+
+        Expr? initializer = null;
+        if (Match(EQUAL))
+        {
+            initializer = Expression();
+        }
+
+        Consume(SEMICOLON, "Expect ';' after variable declaration");
+        return new Stmt.Var(name, initializer);
+    }
+
+    private Stmt Statement()
+    {
+        if (Match(PRINT))
+        {
+            return PrintStatement();
+        }
+
+        if (Match(LEFT_BRACE))
+        {
+            return new Stmt.Block(Block());
+        }
+
+        return ExpressionStatement();
+    }
+
+    private List<Stmt> Block()
+    {
+        List<Stmt> statements = [];
+
+        while (!Check(RIGHT_BRACE) && !IsAtEnd())
+        {
+            statements.Add(Declaration());
+        }
+
+        Consume(RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+
+    private Stmt PrintStatement()
+    {
+        Expr value = Expression();
+        Consume(SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    private Stmt ExpressionStatement()
+    {
+        Expr expr = Expression();
+        Consume(SEMICOLON, "Expect ';' after expression");
+        return new Stmt.Expression(expr);
+    }
+
     private Expr Expression()
     {
-        return Ternary();
+        return Assignment();
+    }
+
+    private Expr Assignment()
+    {
+        Expr expr = Ternary();
+
+        if (Match(EQUAL))
+        {
+            Token equals = Previous();
+            Expr value = Assignment();
+
+            if (expr is Expr.Variable variable)
+            {
+                Token name = variable.Name;
+                return new Expr.Assign(name, value);
+            }
+
+            Error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
     }
 
     private Expr Ternary()
@@ -154,6 +259,11 @@ class Parser
             return new Expr.Literal(Previous().Literal);
         }
 
+        if (Match(IDENTIFIER))
+        {
+            return new Expr.Variable(Previous());
+        }
+
         if (Match(LEFT_PAREN))
         {
             Expr expr = Expression();
@@ -220,10 +330,10 @@ class Parser
         return Tokens[Current - 1];
     }
 
-    private static ParseError Error(Token token, string message)
+    private static ParseException Error(Token token, string message)
     {
         Lox.Error(token, message);
-        return new ParseError();
+        return new ParseException();
     }
 
     private void Synchronize()

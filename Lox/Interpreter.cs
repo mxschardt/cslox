@@ -3,14 +3,20 @@ using static Lox.TokenType;
 
 namespace Lox;
 
-class Interpreter : Expr.IVisitor<object>
+class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 {
-    internal void Interpret(Expr expression)
+    private Environment environment = new();
+
+    internal void Interpret(List<Stmt> statements)
     {
         try
         {
-            object value = Evaluate(expression);
-            Console.WriteLine(Stringify(value));
+            foreach (var statement in statements)
+            {
+                Execute(statement);
+            }
+            // object value = Evaluate(expression);
+            // Console.WriteLine(Stringify(value));
         }
         catch (RuntimeException ex)
         {
@@ -24,6 +30,11 @@ class Interpreter : Expr.IVisitor<object>
         {
             throw;
         }
+    }
+
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
     }
 
     private object Evaluate(Expr expression)
@@ -83,7 +94,8 @@ class Interpreter : Expr.IVisitor<object>
                 CheckNumberOperands(expr.Operator, left, right);
                 return (double)left * (double)right;
             case PLUS:
-                return (left, right) switch {
+                return (left, right) switch
+                {
                     (double l, double r) => l + r,
                     (string l, string r) => l + r,
                     (double l, string r) => l.ToString() + r,
@@ -143,6 +155,70 @@ class Interpreter : Expr.IVisitor<object>
     {
         Evaluate(expr.Left);
         return Evaluate(expr.Right);
+    }
+
+    public object? VisitVariableExpr(Expr.Variable variable)
+    {
+        return environment.Get(variable.Name);
+    }
+
+    public object? VisitExpressionStmt(Stmt.Expression stmt)
+    {
+        Evaluate(stmt.Expr);
+        return null;
+    }
+
+    public object? VisitPrintStmt(Stmt.Print stmt)
+    {
+        object value = Evaluate(stmt.Expr);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    public object? VisitVarStmt(Stmt.Var stmt)
+    {
+        object? value = null;
+
+        if (stmt.Initializer != null)
+        {
+            value = Evaluate(stmt.Initializer);
+        }
+
+        environment.Define(stmt.Name.Lexeme, value);
+        return null;
+    }
+
+    public object VisitAssignExpr(Expr.Assign expr)
+    {
+        object value = Evaluate(expr.Value);
+        environment.Assign(expr.Name, value);
+        return value;
+    }
+
+    public object? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.Statements, new Environment(environment));
+        return null;
+    }
+
+    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    {
+        Environment previous = this.environment;
+
+        try
+        {
+            this.environment = environment;
+
+            foreach (var statement in statements)
+            {
+                Execute(statement);
+            }
+        }
+        finally
+        {
+            this.environment = previous;
+        }
+
     }
 
     private static void CheckNumberOperand(Token @operator, object operand)

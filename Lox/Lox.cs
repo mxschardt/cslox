@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 
 namespace Lox;
 
@@ -13,7 +13,7 @@ public class Lox
         if (args.Length > 1)
         {
             Console.WriteLine("Usage: cslox [script]");
-            Environment.Exit(0);
+            System.Environment.Exit(0);
         }
         else if (args.Length == 1)
         {
@@ -31,7 +31,7 @@ public class Lox
         if (!exists)
         {
             Console.WriteLine("No such file.");
-            Environment.Exit(65);
+            System.Environment.Exit(65);
         }
 
         var text = File.ReadAllText(path, Encoding.UTF8);
@@ -39,11 +39,11 @@ public class Lox
 
         if (hadError)
         {
-            Environment.Exit(65);
+            System.Environment.Exit(65);
         }
         if (hadRuntimeError)
         {
-            Environment.Exit(70);
+            System.Environment.Exit(70);
         }
     }
 
@@ -69,11 +69,12 @@ public class Lox
         var scanner = new Scanner(input);
         List<Token> tokens = scanner.ScanTokens();
         var parser = new Parser(tokens);
-        var expression = parser.Parse();
+        var statements = parser.Parse();
 
-        if (hadError || expression == null) return;
+        if (hadError || statements == null) return;
 
-        interpreter.Interpret(expression);
+        interpreter.Interpret(statements);
+        // Console.WriteLine(new AstPrinter().Print(statements));
     }
 
     internal static void Error(int line, string message)

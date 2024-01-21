@@ -11,6 +11,8 @@ abstract class Expr
         T VisitUnaryExpr(Unary expr);
         T VisitCommaExpr(Comma expr);
         T VisitTernaryExpr(Ternary ternary);
+        T? VisitVariableExpr(Variable variable);
+        T VisitAssignExpr(Assign assign);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -60,9 +62,9 @@ abstract class Expr
 
         internal override T Accept<T>(IVisitor<T> visitor)
         {
-            #pragma warning disable CS8603 // Possible null reference return.
+#pragma warning disable CS8603 // Possible null reference return.
             return visitor.VisitLiteralExpr(this);
-            #pragma warning restore CS8603
+#pragma warning restore CS8603
         }
     }
 
@@ -120,6 +122,41 @@ abstract class Expr
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitTernaryExpr(this);
+        }
+    }
+
+    internal class Variable : Expr
+    {
+        internal readonly Token Name;
+
+        public Variable(Token name)
+        {
+            Name = name;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+#pragma warning disable CS8603 // Possible null reference return.
+            return visitor.VisitVariableExpr(this);
+#pragma warning restore CS8603
+        }
+
+    }
+
+    internal class Assign : Expr
+    {
+        internal readonly Token Name;
+        internal readonly Expr Value;
+
+        internal Assign(Token name, Expr value)
+        {
+            Name = name;
+            Value = value;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitAssignExpr(this);
         }
     }
 }

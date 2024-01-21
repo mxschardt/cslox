@@ -2,7 +2,7 @@ namespace Tools;
 
 public class GenerateAst
 {
-    public static void Run(string[] args)
+    public static void Main(string[] args)
     {
         if (args.Length != 1)
         {
@@ -15,10 +15,16 @@ public class GenerateAst
             "Binary   : Expr left, Token oper, Expr right",
             "Grouping : Expr expression",
             "Literal  : object value",
-            "Unary    : Token oper, Expr right"
+            "Unary    : Token oper, Expr right",
+            "Variable : Token name"
         ];
 
-        DefineAst(outputDir, "Expr", list);
+        // DefineAst(outputDir, "Expr", list);
+        DefineAst(outputDir, "Stmt", [
+            "Expression : Expr expression",
+            "Print      : Expr expression",
+            "Var        : Token name, Expr initializer"
+        ]);
     }
 
     private static void DefineAst(string outputDir, string baseName, List<string> types)
@@ -94,7 +100,6 @@ public class GenerateAst
             writer.WriteLine("        T Visit" + typeName + baseName + "(" + typeName + " " + baseName.ToLower() + ");");
         }
         writer.WriteLine("    }");
-        writer.WriteLine();
     }
 
     private static string Capitalize(string input)

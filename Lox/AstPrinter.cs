@@ -46,6 +46,11 @@ class AstPrinter : Expr.IVisitor<string>
         return Parenthesize("?", expr.Condition, expr.Left, expr.Right);
     }
 
+    public string VisitVariableExpr(Expr.Variable variable)
+    {
+        return variable.Name.Lexeme;
+    }
+
     private string Parenthesize(string name, params Expr[] exprs)
     {
         var builder = new StringBuilder();
@@ -59,5 +64,10 @@ class AstPrinter : Expr.IVisitor<string>
         builder.Append(')');
 
         return builder.ToString();
+    }
+
+    public string VisitAssignExpr(Expr.Assign assign)
+    {
+        return $"{assign.Name} = {assign.Value}";
     }
 }
