@@ -13,6 +13,7 @@ abstract class Expr
         T VisitTernaryExpr(Ternary ternary);
         T? VisitVariableExpr(Variable variable);
         T VisitAssignExpr(Assign assign);
+        T VisitLogicalExpr(Logical logical);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -157,6 +158,25 @@ abstract class Expr
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitAssignExpr(this);
+        }
+    }
+
+    internal class Logical : Expr
+    {
+        internal readonly Expr Left;
+        internal readonly Token Operator;
+        internal readonly Expr Right;
+
+        internal Logical(Expr left, Token @operator, Expr right)
+        {
+            Left = left;
+            Operator = @operator;
+            Right = right;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitLogicalExpr(this);
         }
     }
 }

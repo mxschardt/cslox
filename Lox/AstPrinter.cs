@@ -70,4 +70,9 @@ class AstPrinter : Expr.IVisitor<string>
     {
         return $"{assign.Name} = {assign.Value}";
     }
+
+    public string VisitLogicalExpr(Expr.Logical logical)
+    {
+        return Parenthesize(logical.Operator.Lexeme, logical.Left, logical.Right);
+    }
 }

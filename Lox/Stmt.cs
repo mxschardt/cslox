@@ -8,6 +8,8 @@ abstract class Stmt
         T VisitPrintStmt(Print stmt);
         T VisitVarStmt(Var stmt);
         T VisitBlockStmt(Block block);
+        T VisitIfStmt(If stmt);
+        T VisitWhileStmt(While stmt);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -18,7 +20,7 @@ abstract class Stmt
 
         internal Expression(Expr expression)
         {
-          Expr = expression;
+            Expr = expression;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -33,7 +35,7 @@ abstract class Stmt
 
         internal Print(Expr expression)
         {
-          Expr = expression;
+            Expr = expression;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -49,8 +51,8 @@ abstract class Stmt
 
         internal Var(Token name, Expr? initializer)
         {
-          Name = name;
-          Initializer = initializer;
+            Name = name;
+            Initializer = initializer;
         }
 
         internal override T Accept<T>(IVisitor<T> visitor)
@@ -71,6 +73,41 @@ abstract class Stmt
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitBlockStmt(this);
+        }
+    }
+
+    internal class If : Stmt
+    {
+        internal readonly Expr Condition;
+        internal readonly Stmt ThenBranch;
+        internal readonly Stmt? ElseBranch;
+
+        internal If(Expr condition, Stmt thenBranch, Stmt? elseBranch)
+        {
+            Condition = condition;
+            ThenBranch = thenBranch;
+            ElseBranch = elseBranch;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitIfStmt(this);
+        }
+    }
+    internal class While : Stmt
+    {
+        internal readonly Expr Condition;
+        internal readonly Stmt Body;
+
+        internal While(Expr condition, Stmt body)
+        {
+            Condition = condition;
+            Body = body;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitWhileStmt(this);
         }
     }
 }

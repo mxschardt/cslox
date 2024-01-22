@@ -232,6 +232,22 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object VisitLogicalExpr(Expr.Logical logical)
+    {
+        object left = Evaluate(logical.Left);
+
+        if (logical.Operator.Type == OR)
+        {
+            if (IsTruthy(left)) return left;
+        }
+        else
+        {
+            if (!IsTruthy(left)) return left;
+        }
+
+        return Evaluate(logical.Right);
+    }
+
     private void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
         Environment previous = this.environment;
@@ -250,6 +266,29 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
             this.environment = previous;
         }
 
+    }
+
+    public object? VisitIfStmt(Stmt.If stmt)
+    {
+        if (IsTruthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.ThenBranch);
+        }
+        else if (stmt.ElseBranch != null)
+        {
+            Execute(stmt.ElseBranch);
+        }
+
+        return null;
+    }
+
+    public object? VisitWhileStmt(Stmt.While stmt)
+    {
+        while(IsTruthy(Evaluate(stmt.Condition)))
+        {
+            Execute(stmt.Body);
+        }
+        return null;
     }
 
     private static void CheckNumberOperand(Token @operator, object operand)

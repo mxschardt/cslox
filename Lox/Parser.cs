@@ -6,14 +6,26 @@ namespace Lox;
 // declaration    → varDecl
 //                | statement ;
 // statement      → exprStmt
+//                | ifStmt
 //                | printStmt
+//                | whileStmt
+//                | forStmt
 //                | block ;
+// ifStmt         → "if" "(" expression ")" statement
+//                  ( "else" statement )? ;
+// forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+//                  expression? ";"
+//                  expression? ")" statement ;
+// whileStmt      → "while" "(" expression ")" statement ;
 // varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 // block          → "{" declaration* "}"
 //
 // expression     → assignment ;
 // assignment     → IDENTIFIER "=" assignment
-//                | ternary ;
+//                | ternary
+//                | logic_or ;
+// logic_or       → logic_and ( "or" logic_and)* ;
+// logic_and      → ternary ( "and" ternary )* ;
 // ternary        → equality ("?" equality ":" equality)* ;
 // equality       → comparison ( ( "!=" | "==" ) comparison )* ;
 // comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
@@ -89,12 +101,103 @@ class Parser
             return PrintStatement();
         }
 
+        if (Match(IF))
+        {
+            return IfStatement();
+        }
+
+        if (Match(WHILE))
+        {
+            return WhileStatement();
+        }
+
+        if (Match(FOR))
+        {
+            return ForStatement();
+        }
+
         if (Match(LEFT_BRACE))
         {
             return new Stmt.Block(Block());
         }
 
         return ExpressionStatement();
+    }
+
+    private Stmt ForStatement()
+    {
+        Consume(LEFT_PAREN, "Expect '(' after 'for'.");
+
+        Stmt? initializer;
+        if (Match(SEMICOLON))
+        {
+            initializer = null;
+        }
+        else if (Match(VAR))
+        {
+            initializer = VarDeclaration();
+        }
+        else
+        {
+            initializer = ExpressionStatement();
+        }
+
+        Expr? condition = null;
+        if (!Check(SEMICOLON))
+        {
+            condition = Expression();
+        }
+        Consume(SEMICOLON, "Expect ';' after loop condition.");
+
+        Expr? increment = null;
+        if (!Check(RIGHT_PAREN))
+        {
+            increment = Expression();
+        }
+        Consume(RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        Stmt body = Statement();
+
+        if (increment != null)
+        {
+            body = new Stmt.Block([body, new Stmt.Expression(increment)]);
+        }
+
+        condition ??= new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+
+        if (initializer != null)
+        {
+            body = new Stmt.Block([initializer, body]);
+        }
+
+        return body;
+    }
+
+    private Stmt WhileStatement()
+    {
+        Consume(LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = Expression();
+        Consume(RIGHT_PAREN, "Expect ')' after condition.");
+        Stmt body = Statement();
+
+        return new Stmt.While(condition, body);
+    }
+
+    private Stmt IfStatement()
+    {
+        Consume(LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = Expression();
+        Consume(RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = Statement();
+        Stmt? elseBranch = null;
+        if (Match(ELSE))
+        {
+            elseBranch = Statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
     }
 
     private List<Stmt> Block()
@@ -131,7 +234,7 @@ class Parser
 
     private Expr Assignment()
     {
-        Expr expr = Ternary();
+        Expr expr = Or();
 
         if (Match(EQUAL))
         {
@@ -145,6 +248,34 @@ class Parser
             }
 
             Error(equals, "Invalid assignment target.");
+        }
+
+        return expr;
+    }
+
+    private Expr Or()
+    {
+        Expr expr = And();
+
+        while (Match(OR))
+        {
+            Token @operator = Previous();
+            Expr right = And();
+            expr = new Expr.Logical(expr, @operator, right);
+        }
+
+        return expr;
+    }
+
+    private Expr And()
+    {
+        Expr expr = Ternary();
+
+        while (Match(AND))
+        {
+            Token @operator = Previous();
+            Expr right = Ternary();
+            expr = new Expr.Logical(expr, @operator, right);
         }
 
         return expr;
