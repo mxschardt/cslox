@@ -5,7 +5,14 @@ namespace Lox;
 
 class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 {
-    private Environment environment = new();
+    internal readonly Environment Globals = new();
+    private Environment Environment;
+
+    internal Interpreter()
+    {
+        Environment = Globals;
+        Globals.Define("clock", new Globals.Clock());
+    }
 
     internal void Interpret(List<Stmt> statements)
     {
@@ -188,7 +195,7 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 
     public object? VisitVariableExpr(Expr.Variable variable)
     {
-        return environment.Get(variable.Name);
+        return Environment.Get(variable.Name);
     }
 
     public object? VisitExpressionStmt(Stmt.Expression stmt)
@@ -208,12 +215,12 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
     {
         if (stmt.Initializer == null)
         {
-            environment.Announce(stmt.Name.Lexeme);
+            Environment.Announce(stmt.Name.Lexeme);
         }
         else
         {
             var value = Evaluate(stmt.Initializer);
-            environment.Define(stmt.Name.Lexeme, value);
+            Environment.Define(stmt.Name.Lexeme, value);
         }
 
         return null;
@@ -222,13 +229,13 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
     public object VisitAssignExpr(Expr.Assign expr)
     {
         object value = Evaluate(expr.Value);
-        environment.Assign(expr.Name, value);
+        Environment.Assign(expr.Name, value);
         return value;
     }
 
     public object? VisitBlockStmt(Stmt.Block stmt)
     {
-        ExecuteBlock(stmt.Statements, new Environment(environment));
+        ExecuteBlock(stmt.Statements, new Environment(Environment));
         return null;
     }
 
@@ -248,13 +255,13 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         return Evaluate(logical.Right);
     }
 
-    private void ExecuteBlock(List<Stmt> statements, Environment environment)
+    internal void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
-        Environment previous = this.environment;
+        Environment previous = Environment;
 
         try
         {
-            this.environment = environment;
+            Environment = environment;
 
             foreach (var statement in statements)
             {
@@ -263,7 +270,7 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         }
         finally
         {
-            this.environment = previous;
+            Environment = previous;
         }
 
     }
@@ -284,11 +291,51 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 
     public object? VisitWhileStmt(Stmt.While stmt)
     {
-        while(IsTruthy(Evaluate(stmt.Condition)))
+        while (IsTruthy(Evaluate(stmt.Condition)))
         {
             Execute(stmt.Body);
         }
         return null;
+    }
+
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        object callee = Evaluate(expr.Callee);
+
+        List<object> arguments = [];
+        foreach (var argument in expr.Arguments)
+        {
+            arguments.Add(Evaluate(argument));
+        }
+
+        if (callee is not ICallable)
+        {
+            throw new RuntimeException(expr.Paren, "Can only call functions and classes");
+        }
+
+        ICallable function = (ICallable)callee;
+        if (arguments.Count != function.Arity())
+        {
+            throw new RuntimeException(expr.Paren, $"Expected {function.Arity()} argument but got {arguments.Count}.");
+        }
+        return function.Call(this, arguments);
+    }
+
+    public object? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        Function function = new(stmt, Environment);
+        Environment.Define(stmt.Name.Lexeme, function);
+        return null;
+    }
+
+    public object? VisitReturnStmt(Stmt.Return stmt)
+    {
+        object? value = null;
+        if (stmt.Value != null)
+        {
+            value = Evaluate(stmt.Value);
+        }
+        throw new Return(value);
     }
 
     private static void CheckNumberOperand(Token @operator, object operand)

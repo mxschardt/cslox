@@ -10,6 +10,8 @@ abstract class Stmt
         T VisitBlockStmt(Block block);
         T VisitIfStmt(If stmt);
         T VisitWhileStmt(While stmt);
+        T VisitFunctionStmt(Function stmt);
+        T VisitReturnStmt(Return stmt);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -94,6 +96,7 @@ abstract class Stmt
             return visitor.VisitIfStmt(this);
         }
     }
+
     internal class While : Stmt
     {
         internal readonly Expr Condition;
@@ -108,6 +111,42 @@ abstract class Stmt
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitWhileStmt(this);
+        }
+    }
+
+    internal class Function : Stmt
+    {
+        internal readonly Token Name;
+        internal readonly List<Token> Params;
+        internal readonly List<Stmt> Body;
+
+        internal Function(Token name, List<Token> @params, List<Stmt> body)
+        {
+            Name = name;
+            Params = @params;
+            Body = body;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitFunctionStmt(this);
+        }
+    }
+
+    internal class Return : Stmt
+    {
+        internal readonly Token Keyword;
+        internal readonly Expr? Value;
+
+        internal Return(Token keyword, Expr? value)
+        {
+            Keyword = keyword;
+            Value = value;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitReturnStmt(this);
         }
     }
 }

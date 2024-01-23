@@ -14,6 +14,7 @@ abstract class Expr
         T? VisitVariableExpr(Variable variable);
         T VisitAssignExpr(Assign assign);
         T VisitLogicalExpr(Logical logical);
+        T? VisitCallExpr(Call call);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -177,6 +178,25 @@ abstract class Expr
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitLogicalExpr(this);
+        }
+    }
+
+    internal class Call : Expr
+    {
+        internal readonly Expr Callee;
+        internal readonly Token Paren;
+        internal readonly List<Expr> Arguments;
+
+        internal Call(Expr callee, Token paren, List<Expr> arguments)
+        {
+            Callee = callee;
+            Paren = paren;
+            Arguments = arguments;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitCallExpr(this);
         }
     }
 }
