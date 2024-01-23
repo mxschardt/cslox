@@ -7,7 +7,7 @@ abstract class Stmt
         T VisitExpressionStmt(Expression stmt);
         T VisitPrintStmt(Print stmt);
         T VisitVarStmt(Var stmt);
-        T VisitBlockStmt(Block block);
+        T VisitBlockStmt(Block stmt);
         T VisitIfStmt(If stmt);
         T VisitWhileStmt(While stmt);
         T VisitFunctionStmt(Function stmt);

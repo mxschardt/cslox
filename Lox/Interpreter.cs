@@ -7,6 +7,7 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 {
     internal readonly Environment Globals = new();
     private Environment Environment;
+    private readonly Dictionary<Expr, int> Locals = [];
 
     internal Interpreter()
     {
@@ -94,6 +95,11 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
             return text;
         }
         return literal.ToString() ?? throw new UnreachableException();
+    }
+
+    internal void Resolve(Expr expr, int depth)
+    {
+        Locals.Add(expr, depth);
     }
 
     public object VisitBinaryExpr(Expr.Binary expr)
@@ -193,9 +199,18 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         return Evaluate(expr.Right);
     }
 
-    public object? VisitVariableExpr(Expr.Variable variable)
+    public object? VisitVariableExpr(Expr.Variable expr)
     {
-        return Environment.Get(variable.Name);
+        return LookUpVariable(expr.Name, expr);
+    }
+
+    private object? LookUpVariable(Token name, Expr.Variable expr)
+    {
+        if (Locals.TryGetValue(expr, out int distance))
+        {
+            return Environment.GetAt(distance, name.Lexeme);
+        }
+        return Globals.Get(name);
     }
 
     public object? VisitExpressionStmt(Stmt.Expression stmt)
@@ -229,7 +244,16 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
     public object VisitAssignExpr(Expr.Assign expr)
     {
         object value = Evaluate(expr.Value);
-        Environment.Assign(expr.Name, value);
+
+        if (Locals.TryGetValue(expr, out int distance))
+        {
+            Environment.AssignAt(distance, expr.Name, value);
+        }
+        else
+        {
+            Globals.Assign(expr.Name, value);
+        }
+
         return value;
     }
 

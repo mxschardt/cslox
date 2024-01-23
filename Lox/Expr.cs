@@ -10,11 +10,11 @@ abstract class Expr
         T? VisitLiteralExpr(Literal expr);
         T VisitUnaryExpr(Unary expr);
         T VisitCommaExpr(Comma expr);
-        T VisitTernaryExpr(Ternary ternary);
-        T? VisitVariableExpr(Variable variable);
-        T VisitAssignExpr(Assign assign);
-        T VisitLogicalExpr(Logical logical);
-        T? VisitCallExpr(Call call);
+        T VisitTernaryExpr(Ternary expr);
+        T? VisitVariableExpr(Variable expr);
+        T VisitAssignExpr(Assign expr);
+        T VisitLogicalExpr(Logical expr);
+        T? VisitCallExpr(Call expr);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);

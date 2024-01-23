@@ -18,6 +18,29 @@ internal class Environment
         Values.Add(name, value);
     }
 
+    internal object? GetAt(int distance, string name)
+    {
+        return Ancestor(distance).Values[name];
+    }
+
+    internal void AssignAt(int distance, Token name, object value)
+    {
+        Ancestor(distance).Values.Add(name.Lexeme, value);
+    }
+
+    Environment Ancestor(int distance)
+    {
+        // Variable must exist because Resolver already found it.
+#pragma warning disable CS8602, CS8603 // Possible null reference.
+        var environment = this;
+        for (int i = 0; i < distance; i++)
+        {
+            environment = environment.Enclosing;
+        }
+        return environment;
+#pragma warning restore CS8602, CS8603
+    }
+
     internal void Announce(string name)
     {
         Undefined.Add(name);

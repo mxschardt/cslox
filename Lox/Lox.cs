@@ -4,7 +4,7 @@ namespace Lox;
 
 public class Lox
 {
-    internal static readonly Interpreter interpreter = new();
+    internal static readonly Interpreter Interpreter = new();
     internal static bool hadError = false;
     internal static bool hadRuntimeError = false;
     internal static bool Repl = false;
@@ -75,13 +75,18 @@ public class Lox
 
         if (hadError || statements == null) return;
 
+        Resolver resolver = new(Interpreter);
+        resolver.Resolve(statements);
+
+        if (hadError) return;
+
         if (Repl)
         {
-            interpreter.InterpretRepl(statements);
+            Interpreter.InterpretRepl(statements);
         }
         else
         {
-            interpreter.Interpret(statements);
+            Interpreter.Interpret(statements);
         }
     }
 
