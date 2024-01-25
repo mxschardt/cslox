@@ -1,0 +1,39 @@
+class Bacon {
+    eat() {
+        print "Bacon eat!";
+    }
+
+    t() {
+        print this;
+    }
+}
+
+var baconEat = Bacon().eat;
+
+// baconEat();
+
+// Bacon().t();
+
+class Cake {
+  taste() {
+    var adjective = "delicious";
+    print "The " + this.flavor + " cake is " + adjective + "!";
+  }
+}
+
+var cake = Cake();
+cake.flavor = "German chocolate";
+cake.taste(); // Prints "The German chocolate cake is delicious!".
+
+var new_cake = Cake();
+new_cake.flavor = "Strawberry";
+new_cake.taste();
+
+class Foo {
+  init() {
+    print this;
+  }
+}
+
+var foo = Foo();
+print foo.init();

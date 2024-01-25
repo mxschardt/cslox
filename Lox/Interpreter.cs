@@ -154,6 +154,17 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         throw new UnreachableException();
     }
 
+    public object? VisitGetExpr(Expr.Get expr)
+    {
+        object obj = Evaluate(expr.Object);
+        if (obj is Instance instance)
+        {
+            return instance.Get(expr.Name);
+        }
+
+        throw new RuntimeException(expr.Name, "Only instances have properties");
+    }
+
     public object VisitGroupingExpr(Expr.Grouping expr)
     {
         return Evaluate(expr.Expression);
@@ -199,12 +210,26 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         return Evaluate(expr.Right);
     }
 
+    object? Stmt.IVisitor<object?>.VisitClassStmt(Stmt.Class stmt)
+    {
+        Environment.Define(stmt.Name.Lexeme, null);
+        Dictionary<string, Function> methods = [];
+        foreach (var method in stmt.Methods)
+        {
+            Function function = new(method, Environment, method.Name.Lexeme.Equals("init"));
+            methods.Add(method.Name.Lexeme, function);
+        }
+        Class @class = new Class(stmt.Name.Lexeme, methods);
+        Environment.Assign(stmt.Name, @class);
+        return null;
+    }
+
     public object? VisitVariableExpr(Expr.Variable expr)
     {
         return LookUpVariable(expr.Name, expr);
     }
 
-    private object? LookUpVariable(Token name, Expr.Variable expr)
+    private object? LookUpVariable(Token name, Expr expr)
     {
         if (Locals.TryGetValue(expr, out int distance))
         {
@@ -279,6 +304,26 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
         return Evaluate(logical.Right);
     }
 
+    public object VisitSetExpr(Expr.Set expr)
+    {
+        object obj = Evaluate(expr.Object);
+
+        if (obj is not Instance ins)
+        {
+            throw new RuntimeException(expr.Name, "Only instances have fields");
+        }
+
+        object value = Evaluate(expr.Value);
+        ins.Set(expr.Name, value);
+        return value;
+    }
+
+    public object VisitThisExpr(Expr.This expr)
+    {
+        return LookUpVariable(expr.Keyword, expr);
+    }
+
+
     internal void ExecuteBlock(List<Stmt> statements, Environment environment)
     {
         Environment previous = Environment;
@@ -347,7 +392,7 @@ class Interpreter : Expr.IVisitor<object>, Stmt.IVisitor<object?>
 
     public object? VisitFunctionStmt(Stmt.Function stmt)
     {
-        Function function = new(stmt, Environment);
+        Function function = new(stmt, Environment, false);
         Environment.Define(stmt.Name.Lexeme, function);
         return null;
     }

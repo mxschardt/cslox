@@ -5,6 +5,11 @@ class Resolver : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     private readonly Interpreter Interpreter;
     private readonly Stack<IDictionary<string, bool>> Scopes = new();
     private FunctionType CurrentFunction = FunctionType.NONE;
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+    private ClassType CurrentClass = ClassType.NONE;
 
     internal Resolver(Interpreter interpreter)
     {
@@ -131,6 +136,33 @@ class Resolver : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         throw new NotImplementedException();
     }
 
+    object? Stmt.IVisitor<object?>.VisitClassStmt(Stmt.Class stmt)
+    {
+        ClassType enclosingClass = CurrentClass;
+        CurrentClass = ClassType.CLASS;
+
+        Declare(stmt.Name);
+        Define(stmt.Name);
+
+        BeginScope();
+        Scopes.Peek().Add("this", true);
+
+        foreach (var method in stmt.Methods)
+        {
+            FunctionType declaration = FunctionType.METHOD;
+            if (method.Name.Lexeme.Equals("init"))
+            {
+                declaration = FunctionType.INITIALIZER;
+            }
+            ResolveFunction(method, declaration);
+        }
+
+        EndScope();
+
+        CurrentClass = enclosingClass;
+        return null;
+    }
+
     object? Stmt.IVisitor<object?>.VisitExpressionStmt(Stmt.Expression stmt)
     {
         Resolve(stmt.Expr);
@@ -143,6 +175,12 @@ class Resolver : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         Define(stmt.Name);
 
         ResolveFunction(stmt, FunctionType.FUNCTION);
+        return null;
+    }
+
+    object? Expr.IVisitor<object?>.VisitGetExpr(Expr.Get expr)
+    {
+        Resolve(expr.Object);
         return null;
     }
 
@@ -181,10 +219,32 @@ class Resolver : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    object? Expr.IVisitor<object?>.VisitSetExpr(Expr.Set expr)
+    {
+        Resolve(expr.Value);
+        Resolve(expr.Object);
+        return null;
+    }
+
+    object? Expr.IVisitor<object?>.VisitThisExpr(Expr.This expr)
+    {
+        if (CurrentClass == ClassType.NONE)
+        {
+            Lox.Error(expr.Keyword, "Can't use 'this' outside of a class");
+        }
+
+        ResolveLocal(expr, expr.Keyword);
+        return null;
+    }
+
     object? Stmt.IVisitor<object?>.VisitReturnStmt(Stmt.Return stmt)
     {
         if (stmt.Value != null)
         {
+            if (CurrentFunction == FunctionType.INITIALIZER)
+            {
+                Lox.Error(stmt.Keyword, "Can't return from an initializer");
+            }
             Resolve(stmt.Value);
         }
         return null;
@@ -234,5 +294,7 @@ class Resolver : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 enum FunctionType
 {
     NONE,
-    FUNCTION
+    FUNCTION,
+    INITIALIZER,
+    METHOD
 }

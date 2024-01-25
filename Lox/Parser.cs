@@ -3,9 +3,11 @@ using static Lox.TokenType;
 namespace Lox;
 
 // program        → declaration* EOF ;
-// declaration    → varDecl
+// declaration    → classDecl
 //                | funcDecl
+//                | varDecl
 //                | statement ;
+// classDecl      → "class" IDENTIFIER "{" function* "}" ;
 // statement      → exprStmt
 //                | ifStmt
 //                | printStmt
@@ -27,7 +29,7 @@ namespace Lox;
 // block          → "{" declaration* "}"
 //
 // expression     → assignment ;
-// assignment     → IDENTIFIER "=" assignment
+// assignment     → ( call "." )? IDENTIFIER "=" assignment
 //                | ternary
 //                | logic_or ;
 // logic_or       → logic_and ( "or" logic_and)* ;
@@ -39,7 +41,7 @@ namespace Lox;
 // factor         → unary ( ( "/" | "*" ) unary )* ;
 // unary          → ( "!" | "-" ) unary
 //                | call ;
-// call           → primary ( "(" arguments? ")" )* ;
+// call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
 // arguments      → expression ( "," expression )* ;
 // primary        → "true" | "false" | "nil"
 //                | NUMBER | STRING
@@ -73,6 +75,11 @@ class Parser
     {
         try
         {
+            if (Match(CLASS))
+            {
+                return ClassDeclaration();
+            }
+
             if (Match(FUN))
             {
                 return Function("function");
@@ -91,7 +98,23 @@ class Parser
         }
     }
 
-    private Stmt Function(string kind)
+    private Stmt? ClassDeclaration()
+    {
+        Token name = Consume(IDENTIFIER, "Expect class name.");
+        Consume(LEFT_BRACE, "Expect '{' before class body.");
+
+        List<Stmt.Function> methods = [];
+        while (!Check(RIGHT_BRACE) && !IsAtEnd())
+        {
+            methods.Add(Function("method"));
+        }
+
+        Consume(RIGHT_BRACE, "Expect '}' after class body.");
+
+        return new Stmt.Class(name, methods);
+    }
+
+    private Stmt.Function Function(string kind)
     {
         Token name = Consume(IDENTIFIER, $"Expect {kind} name.");
         Consume(LEFT_PAREN, $"Expect '(' after {kind} name.");
@@ -299,6 +322,10 @@ class Parser
                 Token name = variable.Name;
                 return new Expr.Assign(name, value);
             }
+            else if (expr is Expr.Get get)
+            {
+                return new Expr.Set(get.Object, get.Name, value);
+            }
 
             Error(equals, "Invalid assignment target.");
         }
@@ -428,6 +455,11 @@ class Parser
             {
                 expr = FinishCall(expr);
             }
+            else if (Match(DOT))
+            {
+                Token name = Consume(IDENTIFIER, "Expect property name after '.'.");
+                expr = new Expr.Get(expr, name);
+            }
             else
             {
                 break;
@@ -481,6 +513,11 @@ class Parser
         if (Match(NUMBER, STRING))
         {
             return new Expr.Literal(Previous().Literal);
+        }
+
+        if (Match(THIS))
+        {
+            return new Expr.This(Previous());
         }
 
         if (Match(IDENTIFIER))

@@ -15,6 +15,9 @@ abstract class Expr
         T VisitAssignExpr(Assign expr);
         T VisitLogicalExpr(Logical expr);
         T? VisitCallExpr(Call expr);
+        T? VisitGetExpr(Get expr);
+        T VisitSetExpr(Set expr);
+        T VisitThisExpr(This @this);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -197,6 +200,57 @@ abstract class Expr
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitCallExpr(this);
+        }
+    }
+
+    internal class Get : Expr
+    {
+        internal readonly Expr Object;
+        internal readonly Token Name;
+
+        internal Get(Expr @object, Token name)
+        {
+            Object = @object;
+            Name = name;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitGetExpr(this);
+        }
+    }
+
+    internal class Set : Expr
+    {
+        internal readonly Expr Object;
+        internal readonly Token Name;
+        internal readonly Expr Value;
+
+        internal Set(Expr @object, Token name, Expr value)
+        {
+            Object = @object;
+            Name = name;
+            Value = value;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitSetExpr(this);
+        }
+    }
+
+    internal class This : Expr
+    {
+        internal readonly Token Keyword;
+
+        internal This(Token keyword)
+        {
+            Keyword = keyword;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitThisExpr(this);
         }
     }
 }

@@ -12,6 +12,7 @@ abstract class Stmt
         T VisitWhileStmt(While stmt);
         T VisitFunctionStmt(Function stmt);
         T VisitReturnStmt(Return stmt);
+        T VisitClassStmt(Class stmt);
     }
 
     internal abstract T Accept<T>(IVisitor<T> visitor);
@@ -147,6 +148,27 @@ abstract class Stmt
         internal override T Accept<T>(IVisitor<T> visitor)
         {
             return visitor.VisitReturnStmt(this);
+        }
+    }
+
+    internal class Class : Stmt
+    {
+        internal readonly Token Name;
+        // internal readonly Expr.Variable Superclass;
+        internal readonly List<Function> Methods;
+
+        internal Class(Token name,
+        // Expr.Variable superclass,
+        List<Function> methods)
+        {
+            Name = name;
+            // Superclass = superclass;
+            Methods = methods;
+        }
+
+        internal override T Accept<T>(IVisitor<T> visitor)
+        {
+            return visitor.VisitClassStmt(this);
         }
     }
 }
